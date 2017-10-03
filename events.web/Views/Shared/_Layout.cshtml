@@ -1,0 +1,36 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewBag.Title</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="~/content/site.css" rel="stylesheet">
+</head>
+<body>
+    <nav>
+        <div class="nav-wrapper">
+            @Html.ActionLink("Logo", "Index", "Home", new { area = "" }, new { @class = "brand-logo right" })
+            <ul>
+                <li>@Html.ActionLink("Home", "Index", "Home", new { area = "" }, null)</li>
+            </ul>
+        </div>
+    </nav>
+    <main>
+        <div class="container body-content">
+            <div class="row">
+                <div class="col s12">
+                    @RenderBody()
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer class="page-footer">
+        <p class="white-text">&copy; @DateTime.Now.Year - Parse MicroData URLs</p>
+    </footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+    @RenderSection("scripts", required: false)
+</body>
+</html>

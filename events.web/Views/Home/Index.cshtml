@@ -1,0 +1,130 @@
+﻿@{
+    ViewBag.Title = "Parse Event Urls";
+}
+<div id="app">
+    <div class="row">
+        <form class="col s12">
+            <div class="row">
+                <div class="input-field col s12">
+                    <textarea id="urls" class="materialize-textarea" v-model="computedUrls"></textarea>
+                    <label for="urls" class="active">One URL per line</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s12">
+                    <button type="submit" class="waves-effect waves-light btn red lighten-2" @@click="post">Parse</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="row">
+        <div class="col s12">
+            <events-list :events="events" :isinit="hasSearched"></events-list>
+        </div>
+    </div>
+</div>
+
+<script type="text/x-template" id="events-list">
+    <div v-if="events.length > 0">
+        <ul class="collection">
+            <li class="collection-item" v-for="event in events" v-bind:key="event.LocationUri">
+                <p style="font-size:75%;float:right;clear:both">
+                    <a :href="event.SourceUri" target="_blank" class="grey-text text-lighten-2">{{ event.SourceUri }}</a>
+                </p>
+                <p>
+                    <a v-if="event.Longitude" :href="'https://maps.apple.com?q=' + event.Latitude + ',' + event.Longitude" target="_blank"><i class="material-icons red-text text-lighten-2">location_on</i></a>
+                    <a :href="event.LocationUri" target="_blank">{{ event.LocationName }}</a>
+                </p>
+                <img class="circle responsive-img" v-if="event.ImageUri" :src="event.ImageUri" />
+                <p>
+                    <a :href="event.Uri" target="_blank">{{ event.Name }} {{ event.StartDate | formatDate }}</a>
+                </p>
+            </li>
+        </ul>
+    </div>
+    <div v-else-if="isinit === true">
+        Nothing to show
+    </div>
+</script>
+
+@section Scripts {
+    <script src="https://unpkg.com/vue@2.4.4/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios@0.16.2/dist/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+    <script>
+        axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+        axios.defaults.headers.common['Content-Type'] = 'application/ json';
+        $(function () {
+            Vue.component('events-list', {
+                props: ['events', 'isinit'],
+                filters: {
+                    formatDate(value) {
+                        return value ? '(' + moment(new Date(value)).format('YYYY-MM-DD HH:mm') + ')' : '';
+                    }
+                },
+                template: '#events-list'
+            });
+
+            var vm = new Vue({
+                el: '#app',
+                data: {
+                    urls: '',
+                    events: [],
+                    hasSearched: false
+                },
+                watch:
+                {
+                    urls: function (val) {
+                        var $urls = $('#urls');
+                        setTimeout(function () {
+                            $urls.trigger('focus');
+                            $urls.trigger('autoresize');
+                        }, 100);
+                    }
+                },
+                computed:
+                {
+                    computedUrls: {
+                        get: function () {
+                            return this.urls;
+                        },
+                        set: function (value) {
+                            this.urls = value;
+                            //setTimeout(function () {
+                            //    $('#urls').trigger('autoresize');
+                            //}, 100);
+                        }
+                    }
+                },
+                methods: {
+                    resize: function () {
+                        $('#urls').trigger('autoresize');
+                    },
+                    get: function (e) {
+                        if (e && e.preventDefault) e.preventDefault();
+
+                        axios.get('/api/parse').then(response => {
+                                this.computedUrls = response.data.urls.join('\n');
+                                this.events = response.data.events || [];
+                            })
+                            .catch(response => console.log('get', response));
+                    },
+                    post: function (e) {
+                        if (e && e.preventDefault) e.preventDefault();
+
+                        axios.post('/api/parse', this.computedUrls.split('\n'))
+                            .then(response => {
+                                this.hasSearched = true;
+                                this.computedUrls = response.data.urls.join('\n');
+                                this.events = response.data.events;
+                            })
+                            .catch(error => console.log('post', error));
+                    }
+                },
+                created: function () {
+                    this.get();
+                }
+            });
+        });
+    </script>
+}
